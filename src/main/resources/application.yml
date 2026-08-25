@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: Seed
+
+  config:
+    import: optional:file:./backend-config/
+
+  profiles:
+    active: local
