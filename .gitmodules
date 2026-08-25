@@ -1,0 +1,3 @@
+[submodule "backend-config"]
+	path = backend-config
+	url = https://github.com/SSAFY-2026-AI-Challenge/backend-config.git
