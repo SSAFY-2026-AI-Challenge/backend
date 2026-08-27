@@ -32,4 +32,9 @@ public interface AiReportRepository extends JpaRepository<AiReport, Integer> {
             LocalDate startDate,
             LocalDate endDate
     );
+
+    Optional<AiReport> findFirstByMemberIdAndReportTypeOrderByGeneratedAtDesc(
+            Integer memberId,
+            String reportType
+    );
 }
