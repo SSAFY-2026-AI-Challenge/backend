@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class CreditScoreService {
 
-    private static final String REPORT_TYPE = "CREDIT_REPORT";
+    private static final String REPORT_TYPE = "CREDIT_SCORE";
 
     private final AiReportRepository aiReportRepository;
     private final MemberRepository memberRepository;
