@@ -46,4 +46,12 @@ public class Account {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
+    public void withdraw(Integer amount) {
+        this.balance -= amount;
+    }
+
+    public void deposit(Integer amount) {
+        this.balance += amount;
+    }
 }
