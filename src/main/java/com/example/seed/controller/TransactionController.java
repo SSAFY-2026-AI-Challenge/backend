@@ -97,7 +97,7 @@ public class TransactionController {
 
             @Parameter(
                     description = "조회할 계좌 ID",
-                    example = "CHK-S3101"
+                    example = "CHK-s3101"
             )
             @RequestParam(required = false)
             String accountId,

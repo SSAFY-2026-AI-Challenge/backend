@@ -55,8 +55,8 @@ public class CreditScoreService {
                 report.getDetailJson()
         );
 
-        int score = detail.path("score").asInt();
-        String grade = detail.path("grade").asText();
+        int score = detail.path("credit_score").asInt();
+        String grade = detail.path("grade_code").asText();
 
         // 4. 응답 생성
         return new CreditScoreResponse(
