@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 public class Transaction {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = "account_id", nullable = false, length = 45)
@@ -24,6 +25,18 @@ public class Transaction {
     private LocalDateTime occuredAt;
 
     protected Transaction() {
+    }
+
+    public Transaction(
+            String accountId,
+            Integer amount,
+            String description,
+            LocalDateTime occuredAt
+    ) {
+        this.accountId = accountId;
+        this.amount = amount;
+        this.description = description;
+        this.occuredAt = occuredAt;
     }
 
     public Integer getId() {
