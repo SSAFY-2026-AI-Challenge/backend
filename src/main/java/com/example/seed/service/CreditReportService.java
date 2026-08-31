@@ -112,7 +112,9 @@ public class CreditReportService {
                 grade,
                 factors,
                 behaviorMetrics,
-                report.getSummary()
+                report.getSummary(),
+                report.getContent(),
+                report.getExpectedEffect()
         );
     }
 

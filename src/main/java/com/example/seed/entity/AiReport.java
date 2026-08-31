@@ -27,6 +27,12 @@ public class AiReport {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String summary;
 
+    @Column(columnDefinition = "TEXT")
+    private String content;
+
+    @Column(name = "expected_effect", columnDefinition = "TEXT")
+    private String expectedEffect;
+
     @Column(name = "detail_json", columnDefinition = "JSON")
     private String detailJson;
 

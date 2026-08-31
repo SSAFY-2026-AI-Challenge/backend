@@ -9,7 +9,9 @@ public record CreditReportResponse (
     String grade,
     List<Factor> factors,
     List<BehaviorMetric> behaviorMetrics,
-    String summary
+    String summary,
+    String content,
+    String expectedEffect
 ) {
     public record Factor(
             String type,
