@@ -3,7 +3,7 @@ package com.example.seed.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "ai_report")
@@ -21,15 +21,21 @@ public class AiReport {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @Column(name = "report_type", nullable = false, length = 45)
-    private String reportType;
+    @Column(name = "credit_score", nullable = false)
+    private Integer creditScore;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, length = 512)
     private String summary;
 
-    @Column(name = "detail_json", columnDefinition = "JSON")
-    private String detailJson;
+    @Column(nullable = false, length = 512)
+    private String content;
+
+    @Column(name = "expected_effect", nullable = false, length = 512)
+    private String expectedEffect;
+
+    @Column(nullable = false, columnDefinition = "json")
+    private String features;
 
     @Column(name = "generated_at", nullable = false)
-    private LocalDate generatedAt;
+    private LocalDateTime generatedAt;
 }
