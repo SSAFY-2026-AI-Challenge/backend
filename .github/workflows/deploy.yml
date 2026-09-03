@@ -1,0 +1,43 @@
+name: Deploy Spring Boot
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build
+        run: |
+          chmod +x gradlew
+          ./gradlew bootJar -x test
+
+      - name: Deploy JAR
+        run: |
+          sudo systemctl stop springboot
+          sudo cp build/libs/*.jar /opt/myapp/app.jar
+          sudo systemctl start springboot
+
+      
+      - name: Check service
+        run: |
+          sudo systemctl is-active --quiet springboot
