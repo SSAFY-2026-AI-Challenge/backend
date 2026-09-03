@@ -30,14 +30,6 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew bootJar -x test
-      
-      - name: Debug sudo
-        run: |
-          echo "USER=$USER"
-          whoami
-          id
-          hostname
-          sudo -n -l
 
       - name: Deploy JAR
         run: |
@@ -47,8 +39,19 @@ jobs:
           echo "Deployed JAR:"
           ls -lh /opt/myapp/app.jar
           sudo -n systemctl restart springboot
+
+      - name: Debug sudo
+        run: |
+          echo "USER=$USER"
+          whoami
+          id
+          hostname
+          which sudo
+          sudo -V | head -n 3
+          sudo -n -l
       
       - name: Check service
         run: |
           sleep 5
-          sudo -n systemctl is-active --quiet springboot
+          sudo -n systemctl status springboot --no-pager
+          sudo -n systemctl is-active springboot
