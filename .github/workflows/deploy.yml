@@ -30,12 +30,21 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew bootJar -x test
+      
+      - name: Debug sudo
+        run: |
+          echo "USER=$USER"
+          whoami
+          id
+          hostname
+          sudo -n -l
+          sudo -n systemctl is-active springboot
 
       - name: Deploy JAR
         run: |
           sudo systemctl stop springboot
           sudo cp build/libs/*.jar /opt/myapp/app.jar
-          sudo systemctl start springboot
+          sudo -n systemctl restart springboot
 
       
       - name: Check service
