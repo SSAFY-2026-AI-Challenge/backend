@@ -51,4 +51,29 @@ public class ClassroomEconomicAnalysisController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/latest")
+    @Operation(
+            summary = "최신 학급 경제 분석 조회",
+            description = """
+                    특정 학급의 최신 economic_metric 데이터를 기반으로
+                    현재 학급 경제 분석 결과를 조회합니다.
+
+                    현재 MVP에서는 분석 결과를 별도 DB에 저장하지 않으므로
+                    최신 경제지표를 기준으로 규칙 기반 분석을 다시 생성하여 반환합니다.
+                    """
+    )
+    public ResponseEntity<ClassroomEconomicAnalysisResponse> getLatestAnalysis(
+            @Parameter(
+                    description = "조회할 학급 ID",
+                    example = "1"
+            )
+            @PathVariable Integer classroomId
+    ) {
+
+        ClassroomEconomicAnalysisResponse response =
+                classroomEconomicAnalysisService.createAnalysis(classroomId);
+
+        return ResponseEntity.ok(response);
+    }
 }
