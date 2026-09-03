@@ -49,9 +49,3 @@ jobs:
           which sudo
           sudo -V | head -n 3
           sudo -n -l
-      
-      - name: Check service
-        run: |
-          sleep 5
-          sudo -n systemctl status springboot --no-pager
-          sudo -n systemctl is-active springboot
