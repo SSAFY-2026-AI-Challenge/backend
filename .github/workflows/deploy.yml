@@ -3,7 +3,7 @@ name: Deploy Spring Boot
 on:
   push:
     branches:
-      - main
+      - develop
 
 concurrency:
   group: deploy-production

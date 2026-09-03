@@ -25,7 +25,7 @@ public class CreditReportController {
 
     @Operation(
             summary = "AI 신용평가 조회",
-            description = "특정 월의 학생 AI 신용평가 결과를 조회합니다."
+            description = "특정 월의 학생 AI 신용평가 결과(credit_score, summary, content, expected_effect, features)를 조회합니다."
     )
     @ApiResponses({
             @ApiResponse(

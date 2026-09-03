@@ -10,11 +10,8 @@ import com.example.seed.repository.AccountRepository;
 import com.example.seed.repository.AiReportRepository;
 import com.example.seed.repository.MemberRepository;
 import com.example.seed.repository.TransactionRepository;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
@@ -22,26 +19,21 @@ import java.util.List;
 @Service
 public class StudentDashboardService {
 
-    private static final String REPORT_TYPE = "CREDIT_REPORT";
-
     private final MemberRepository memberRepository;
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final AiReportRepository aiReportRepository;
-    private final ObjectMapper objectMapper;
 
     public StudentDashboardService(
             MemberRepository memberRepository,
             AccountRepository accountRepository,
             TransactionRepository transactionRepository,
-            AiReportRepository aiReportRepository,
-            ObjectMapper objectMapper
+            AiReportRepository aiReportRepository
     ) {
         this.memberRepository = memberRepository;
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
         this.aiReportRepository = aiReportRepository;
-        this.objectMapper = objectMapper;
     }
 
     public StudentDashboardResponse getDashboard(Integer memberId) {
@@ -137,7 +129,7 @@ public class StudentDashboardService {
 
         // 12. 신용 정보
         StudentDashboardResponse.Credit credit =
-                getCredit(memberId, currentMonth);
+                getCredit(memberId);
 
         // 13. 최종 응답
         return new StudentDashboardResponse(
@@ -153,25 +145,10 @@ public class StudentDashboardService {
         );
     }
 
-    private StudentDashboardResponse.Credit getCredit(
-            Integer memberId,
-            YearMonth currentMonth
-    ) {
-
-        LocalDate startDate =
-                currentMonth.atDay(1);
-
-        LocalDate endDate =
-                currentMonth.plusMonths(1)
-                        .atDay(1);
+    private StudentDashboardResponse.Credit getCredit(Integer memberId) {
 
         return aiReportRepository
-                .findFirstByMemberIdAndReportTypeAndGeneratedAtGreaterThanEqualAndGeneratedAtLessThanOrderByGeneratedAtDesc(
-                        memberId,
-                        REPORT_TYPE,
-                        startDate,
-                        endDate
-                )
+                .findFirstByMemberIdOrderByGeneratedAtDesc(memberId)
                 .map(this::toCredit)
                 .orElse(
                         new StudentDashboardResponse.Credit(
@@ -181,26 +158,30 @@ public class StudentDashboardService {
                 );
     }
 
-    private StudentDashboardResponse.Credit toCredit(
-            AiReport report
-    ) {
+    private StudentDashboardResponse.Credit toCredit(AiReport report) {
 
-        try {
-            JsonNode detail =
-                    objectMapper.readTree(
-                            report.getDetailJson()
-                    );
+        int score = report.getCreditScore();
 
-            return new StudentDashboardResponse.Credit(
-                    detail.path("score").asInt(),
-                    detail.path("grade").asText()
-            );
+        return new StudentDashboardResponse.Credit(
+                score,
+                toGradeName(score)
+        );
+    }
 
-        } catch (Exception e) {
-            return new StudentDashboardResponse.Credit(
-                    null,
-                    null
-            );
+    private String toGradeName(int score) {
+
+        if (score >= 900) {
+            return "최우수";
         }
+        if (score >= 800) {
+            return "우수";
+        }
+        if (score >= 700) {
+            return "양호";
+        }
+        if (score >= 600) {
+            return "보통";
+        }
+        return "노력";
     }
 }

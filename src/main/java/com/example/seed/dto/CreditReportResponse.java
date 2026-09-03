@@ -1,27 +1,13 @@
 package com.example.seed.dto;
 
-import java.util.List;
+import java.time.LocalDateTime;
 
-public record CreditReportResponse (
-    String yearMonth,
-    int score,
-    int maxScore,
-    String grade,
-    List<Factor> factors,
-    List<BehaviorMetric> behaviorMetrics,
-    String summary
+public record CreditReportResponse(
+        Integer creditScore,
+        String summary,
+        String content,
+        String expectedEffect,
+        Object features,
+        LocalDateTime generatedAt
 ) {
-    public record Factor(
-            String type,
-            String label,
-            String impact
-    ) {
-
-    } public record BehaviorMetric(
-            String key,
-            String label,
-            int value
-    ){
-
-    }
 }
