@@ -12,7 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface TransactionRepository
-        extends JpaRepository<Transaction, Integer>{
+        extends JpaRepository<Transaction, Integer> {
 
     List<Transaction>
     findByAccountIdInAndOccuredAtGreaterThanEqualAndOccuredAtLessThanOrderByOccuredAtDesc(
@@ -45,5 +45,16 @@ public interface TransactionRepository
             @Param("endDate") LocalDateTime endDate,
             @Param("type") String type,
             Pageable pageable
+    );
+
+    @Query("""
+        SELECT COALESCE(SUM(t.amount), 0)
+        FROM Transaction t
+        WHERE t.accountId = :accountId
+          AND t.occuredAt >= :startDate
+        """)
+    Long sumAmountAfter(
+            @Param("accountId") String accountId,
+            @Param("startDate") LocalDateTime startDate
     );
 }
