@@ -31,6 +31,9 @@ public class Member {
     @Column(name = "class", length = 45)
     private String className;
 
+    @Column(name = "classroom_id")
+    private Integer classroomId;
+
     @Column(name = "job", length = 45)
     private String job;
 
@@ -103,6 +106,10 @@ public class Member {
 
     public String getClassName() {
         return className;
+    }
+
+    public Integer getClassroomId() {
+        return classroomId;
     }
 
     public String getJob() {
