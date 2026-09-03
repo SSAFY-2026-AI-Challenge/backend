@@ -41,10 +41,12 @@ jobs:
 
       - name: Deploy JAR
         run: |
-          sudo systemctl stop springboot
-          sudo cp build/libs/*.jar /opt/myapp/app.jar
+          echo "Current directory: $(pwd)"
+          ls -lh build/libs/
+          cp build/libs/*.jar /opt/myapp/app.jar
+          echo "Deployed JAR:"
+          ls -lh /opt/myapp/app.jar
           sudo -n systemctl restart springboot
-
       
       - name: Check service
         run: |
