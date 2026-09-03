@@ -38,7 +38,6 @@ jobs:
           id
           hostname
           sudo -n -l
-          sudo -n systemctl is-active springboot
 
       - name: Deploy JAR
         run: |
@@ -49,4 +48,5 @@ jobs:
       
       - name: Check service
         run: |
-          sudo systemctl is-active --quiet springboot
+          sleep 5
+          sudo -n systemctl is-active --quiet springboot
