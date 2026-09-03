@@ -8,4 +8,9 @@ import java.util.List;
 public interface AccountRepository extends JpaRepository<Account, String> {
 
     List<Account> findByMemberId(Integer memberId);
+
+    List<Account> findByMemberIdAndAccountType(
+            Integer memberId,
+            String accountType
+    );
 }
