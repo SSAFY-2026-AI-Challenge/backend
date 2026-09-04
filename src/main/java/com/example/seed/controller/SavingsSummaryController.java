@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.security.core.Authentication;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/savings")
@@ -56,10 +56,12 @@ public class SavingsSummaryController {
             )
     })
     @GetMapping("/summary")
-    public ResponseEntity<SavingsSummaryResponse> getSavingsSummary() {
+    public ResponseEntity<SavingsSummaryResponse> getSavingsSummary(
+            Authentication authentication
+    ) {
 
-        // TODO: JWT 인증 구현 후 로그인한 사용자의 memberId로 변경
-        Integer memberId = 3;
+        Integer memberId =
+                Integer.valueOf(authentication.getName());
 
         SavingsSummaryResponse response =
                 savingsSummaryService.getSavingsSummary(memberId);

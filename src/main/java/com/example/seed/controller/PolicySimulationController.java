@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.seed.service.TeacherClassroomAuthorizationService;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/v1/classrooms/{classroomId}/policy-simulations")
@@ -19,11 +21,17 @@ import org.springframework.web.bind.annotation.*;
 public class PolicySimulationController {
 
     private final PolicySimulationService policySimulationService;
+    private final TeacherClassroomAuthorizationService
+            teacherClassroomAuthorizationService;
 
     public PolicySimulationController(
-            PolicySimulationService policySimulationService
+            PolicySimulationService policySimulationService,
+            TeacherClassroomAuthorizationService
+                    teacherClassroomAuthorizationService
     ) {
         this.policySimulationService = policySimulationService;
+        this.teacherClassroomAuthorizationService =
+                teacherClassroomAuthorizationService;
     }
 
     @PostMapping
@@ -48,8 +56,18 @@ public class PolicySimulationController {
             @PathVariable Integer classroomId,
 
             @Valid
-            @RequestBody PolicySimulationRequest request
+            @RequestBody PolicySimulationRequest request,
+
+            Authentication authentication
     ) {
+        Integer memberId =
+                Integer.valueOf(authentication.getName());
+
+        teacherClassroomAuthorizationService
+                .validateTeacherClassroom(
+                        memberId,
+                        classroomId
+                );
 
         PolicySimulationResponse response =
                 policySimulationService.simulate(classroomId, request);

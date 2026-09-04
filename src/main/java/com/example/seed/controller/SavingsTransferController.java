@@ -1,5 +1,5 @@
 package com.example.seed.controller;
-
+import jakarta.validation.Valid;
 import com.example.seed.dto.SavingsTransferRequest;
 import com.example.seed.dto.SavingsTransferResponse;
 import com.example.seed.service.SavingsTransferService;
@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.core.Authentication;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/savings")
@@ -67,14 +67,18 @@ public class SavingsTransferController {
     })
     @PostMapping("/transfers")
     public ResponseEntity<SavingsTransferResponse> transfer(
-            @RequestBody SavingsTransferRequest request
+            @Valid @RequestBody SavingsTransferRequest request,
+            Authentication authentication
     ) {
 
-        // TODO: JWT 인증 구현 후 SecurityContext에서 memberId 추출
-        Integer memberId = 3;
+        Integer memberId =
+                Integer.valueOf(authentication.getName());
 
         SavingsTransferResponse response =
-                savingsTransferService.transfer(memberId, request);
+                savingsTransferService.transfer(
+                        memberId,
+                        request
+                );
 
         return ResponseEntity.ok(response);
     }

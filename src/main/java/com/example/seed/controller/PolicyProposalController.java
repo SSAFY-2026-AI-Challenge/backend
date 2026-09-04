@@ -2,10 +2,12 @@ package com.example.seed.controller;
 
 import com.example.seed.dto.PolicyProposalResponse;
 import com.example.seed.service.PolicyProposalService;
+import com.example.seed.service.TeacherClassroomAuthorizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,11 +21,17 @@ import java.util.List;
 public class PolicyProposalController {
 
     private final PolicyProposalService policyProposalService;
+    private final TeacherClassroomAuthorizationService
+            teacherClassroomAuthorizationService;
 
     public PolicyProposalController(
-            PolicyProposalService policyProposalService
+            PolicyProposalService policyProposalService,
+            TeacherClassroomAuthorizationService
+                    teacherClassroomAuthorizationService
     ) {
         this.policyProposalService = policyProposalService;
+        this.teacherClassroomAuthorizationService =
+                teacherClassroomAuthorizationService;
     }
 
     @GetMapping
@@ -45,8 +53,19 @@ public class PolicyProposalController {
                     description = "정책 제안을 조회할 학급 ID",
                     example = "1"
             )
-            @PathVariable Integer classroomId
+            @PathVariable Integer classroomId,
+
+            Authentication authentication
     ) {
+
+        Integer memberId =
+                Integer.valueOf(authentication.getName());
+
+        teacherClassroomAuthorizationService
+                .validateTeacherClassroom(
+                        memberId,
+                        classroomId
+                );
 
         List<PolicyProposalResponse> response =
                 policyProposalService.getPolicyProposals(classroomId);

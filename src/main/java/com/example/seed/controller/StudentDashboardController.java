@@ -1,5 +1,5 @@
 package com.example.seed.controller;
-
+import org.springframework.security.core.Authentication;
 import com.example.seed.dto.StudentDashboardResponse;
 import com.example.seed.service.StudentDashboardService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -56,10 +56,12 @@ public class StudentDashboardController {
             )
     })
     @GetMapping("/dashboard")
-    public ResponseEntity<StudentDashboardResponse> getDashboard() {
+    public ResponseEntity<StudentDashboardResponse> getDashboard(
+            Authentication authentication
+    ) {
 
-        // TODO: JWT 인증 구현 후 로그인한 사용자의 memberId로 변경
-        Integer memberId = 2;
+        Integer memberId =
+                Integer.valueOf(authentication.getName());
 
         StudentDashboardResponse response =
                 studentDashboardService.getDashboard(memberId);

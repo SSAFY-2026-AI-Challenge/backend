@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequiredArgsConstructor
@@ -73,14 +73,18 @@ public class CreditReportController {
                     example = "2026-08",
                     required = true
             )
-            @PathVariable String yearMonth
+            @PathVariable String yearMonth,
+            Authentication authentication
     ) {
 
-        // TODO: JWT 인증 구현 후 로그인 사용자의 memberId로 변경
-        Integer memberId = 2;
+        Integer memberId =
+                Integer.valueOf(authentication.getName());
 
         CreditReportResponse response =
-                creditReportService.getCreditReport(memberId, yearMonth);
+                creditReportService.getCreditReport(
+                        memberId,
+                        yearMonth
+                );
 
         return ResponseEntity.ok(response);
     }

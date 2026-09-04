@@ -1,5 +1,5 @@
 package com.example.seed.controller;
-
+import org.springframework.security.core.Authentication;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.example.seed.dto.PayrollResponse;
@@ -80,11 +80,16 @@ public class PayrollController {
                     example = "2026-08",
                     required = true
             )
-            @PathVariable String yearMonth
+            @PathVariable String yearMonth,
+            Authentication authentication
     ) {
-        // TODO: JWT 인증 구현 후 로그인한 사용자의 memberId로 변경
-        Integer memberId = 2;
 
-        return payrollService.getPayroll(memberId, yearMonth);
+        Integer memberId =
+                Integer.valueOf(authentication.getName());
+
+        return payrollService.getPayroll(
+                memberId,
+                yearMonth
+        );
     }
 }
