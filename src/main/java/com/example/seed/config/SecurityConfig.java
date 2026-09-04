@@ -71,7 +71,45 @@ public class SecurityConfig {
                                 "/error"
                         ).permitAll()
 
-                        // 나머지 API는 로그인 필요
+
+                        // =========================
+                        // 학생 전용 API
+                        // =========================
+                        .requestMatchers(
+                                "/api/v1/student/**",
+                                "/api/v1/accounts/**",
+                                "/api/v1/transactions/**",
+                                "/api/v1/payrolls/**",
+                                "/api/v1/credit-score/**",
+                                "/api/v1/credit-reports/**",
+                                "/api/v1/monthly-results/**",
+
+                                "/api/v1/savings/**",
+                                "/api/v1/savings-summary/**",
+                                "/api/v1/savings-trends/**",
+                                "/api/v1/savings-transfers/**",
+                                "/api/v1/savings-recommendations/**"
+                        ).hasRole("STUDENT")
+
+
+                        // =========================
+                        // 교사 전용 API
+                        // =========================
+                        .requestMatchers(
+                                "/api/v1/classrooms/**"
+                        ).hasRole("TEACHER")
+
+
+                        // =========================
+                        // 학생 / 교사 공통
+                        // =========================
+                        .requestMatchers(
+                                "/api/v1/economic-events/**",
+                                "/api/v1/me"
+                        ).authenticated()
+
+
+                        // 그 외 API도 로그인 필요
                         .anyRequest().authenticated()
                 )
 
@@ -80,12 +118,15 @@ public class SecurityConfig {
                         // JWT가 없거나 인증되지 않은 경우
                         .authenticationEntryPoint(
                                 (request, response, authException) -> {
+
                                     response.setStatus(
                                             HttpServletResponse.SC_UNAUTHORIZED
                                     );
+
                                     response.setContentType(
                                             "application/json;charset=UTF-8"
                                     );
+
                                     response.getWriter().write(
                                             """
                                             {
@@ -100,12 +141,15 @@ public class SecurityConfig {
                         // 인증은 되었지만 권한이 없는 경우
                         .accessDeniedHandler(
                                 (request, response, accessDeniedException) -> {
+
                                     response.setStatus(
                                             HttpServletResponse.SC_FORBIDDEN
                                     );
+
                                     response.setContentType(
                                             "application/json;charset=UTF-8"
                                     );
+
                                     response.getWriter().write(
                                             """
                                             {

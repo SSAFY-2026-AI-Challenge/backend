@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.security.core.Authentication;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/savings")
@@ -53,10 +53,12 @@ public class SavingsTrendsController {
             )
     })
     @GetMapping("/trends")
-    public ResponseEntity<SavingsTrendsResponse> getSavingsTrends() {
+    public ResponseEntity<SavingsTrendsResponse> getSavingsTrends(
+            Authentication authentication
+    ) {
 
-        // TODO: JWT 인증 구현 후 SecurityContext에서 memberId 추출
-        Integer memberId = 3;
+        Integer memberId =
+                Integer.valueOf(authentication.getName());
 
         SavingsTrendsResponse response =
                 savingsTrendsService.getSavingsTrends(memberId);

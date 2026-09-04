@@ -2,10 +2,12 @@ package com.example.seed.controller;
 
 import com.example.seed.dto.ClassroomEconomicAnalysisResponse;
 import com.example.seed.service.ClassroomEconomicAnalysisService;
+import com.example.seed.service.TeacherClassroomAuthorizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,11 +19,17 @@ import org.springframework.web.bind.annotation.*;
 public class ClassroomEconomicAnalysisController {
 
     private final ClassroomEconomicAnalysisService classroomEconomicAnalysisService;
+    private final TeacherClassroomAuthorizationService
+            teacherClassroomAuthorizationService;
 
     public ClassroomEconomicAnalysisController(
-            ClassroomEconomicAnalysisService classroomEconomicAnalysisService
+            ClassroomEconomicAnalysisService classroomEconomicAnalysisService,
+            TeacherClassroomAuthorizationService
+                    teacherClassroomAuthorizationService
     ) {
         this.classroomEconomicAnalysisService = classroomEconomicAnalysisService;
+        this.teacherClassroomAuthorizationService =
+                teacherClassroomAuthorizationService;
     }
 
     @PostMapping
@@ -43,8 +51,18 @@ public class ClassroomEconomicAnalysisController {
                     description = "분석할 학급 ID",
                     example = "1"
             )
-            @PathVariable Integer classroomId
+            @PathVariable Integer classroomId,
+            Authentication authentication
     ) {
+
+        Integer memberId =
+                Integer.valueOf(authentication.getName());
+
+        teacherClassroomAuthorizationService
+                .validateTeacherClassroom(
+                        memberId,
+                        classroomId
+                );
 
         ClassroomEconomicAnalysisResponse response =
                 classroomEconomicAnalysisService.createAnalysis(classroomId);
@@ -68,8 +86,18 @@ public class ClassroomEconomicAnalysisController {
                     description = "조회할 학급 ID",
                     example = "1"
             )
-            @PathVariable Integer classroomId
+            @PathVariable Integer classroomId,
+            Authentication authentication
     ) {
+
+        Integer memberId =
+                Integer.valueOf(authentication.getName());
+
+        teacherClassroomAuthorizationService
+                .validateTeacherClassroom(
+                        memberId,
+                        classroomId
+                );
 
         ClassroomEconomicAnalysisResponse response =
                 classroomEconomicAnalysisService.createAnalysis(classroomId);
