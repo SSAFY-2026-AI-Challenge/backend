@@ -24,7 +24,8 @@ public class SavingsTransferController {
 
     @Operation(
             summary = "저축 계좌 이체",
-            description = "로그인한 학생의 CHECKING 계좌에서 SAVINGS 계좌로 금액을 이체합니다."
+            description = "로그인한 학생의 CHECKING(당좌) 계좌에서 SAVINGS(저축) 계좌로 금액을 이체합니다. " +
+                    "fromAccountId와 toAccountId를 생략하거나 동일하게 입력한 경우, 본인 소유의 CHECKING 계좌에서 SAVINGS 계좌로 자동 탐색하여 이체합니다."
     )
     @ApiResponses({
             @ApiResponse(

@@ -45,12 +45,9 @@ public class SavingsTransferService {
                 );
 
         // 2. 요청값 검증
-        if (request.fromAccountId() == null
-                || request.toAccountId() == null
-                || request.amount() == null) {
-
+        if (request == null || request.amount() == null) {
             throw new BadRequestException(
-                    "이체 정보를 모두 입력해주세요."
+                    "이체 금액을 입력해주세요."
             );
         }
 
@@ -60,50 +57,69 @@ public class SavingsTransferService {
             );
         }
 
-        if (request.fromAccountId().equals(request.toAccountId())) {
-            throw new BadRequestException(
-                    "출금 계좌와 입금 계좌는 같을 수 없습니다."
-            );
-        }
+        Account fromAccount;
+        Account toAccount;
 
-        // 3. 출금 계좌 조회
-        Account fromAccount =
-                accountRepository.findById(request.fromAccountId())
-                        .orElseThrow(() ->
-                                new NotFoundException(
-                                        "출금 계좌를 찾을 수 없습니다."
-                                )
-                        );
+        boolean hasFrom = request.fromAccountId() != null && !request.fromAccountId().trim().isEmpty();
+        boolean hasTo = request.toAccountId() != null && !request.toAccountId().trim().isEmpty();
 
-        // 4. 입금 계좌 조회
-        Account toAccount =
-                accountRepository.findById(request.toAccountId())
-                        .orElseThrow(() ->
-                                new NotFoundException(
-                                        "저축 계좌를 찾을 수 없습니다."
-                                )
-                        );
+        // 출금 계좌와 입금 계좌가 모두 지정되었고 서로 다른 경우: 지정된 계좌 사용
+        if (hasFrom && hasTo && !request.fromAccountId().trim().equals(request.toAccountId().trim())) {
+            fromAccount = accountRepository.findById(request.fromAccountId().trim())
+                    .orElseThrow(() ->
+                            new NotFoundException(
+                                    "출금 계좌를 찾을 수 없습니다."
+                            )
+                    );
 
-        // 5. 로그인한 학생 소유의 계좌인지 확인
-        if (!fromAccount.getMemberId().equals(memberId)
-                || !toAccount.getMemberId().equals(memberId)) {
+            toAccount = accountRepository.findById(request.toAccountId().trim())
+                    .orElseThrow(() ->
+                            new NotFoundException(
+                                    "저축 계좌를 찾을 수 없습니다."
+                            )
+                    );
 
-            throw new BadRequestException(
-                    "본인의 계좌만 이체할 수 있습니다."
-            );
-        }
+            // 로그인한 학생 소유의 계좌인지 확인
+            if (!fromAccount.getMemberId().equals(memberId)
+                    || !toAccount.getMemberId().equals(memberId)) {
+                throw new BadRequestException(
+                        "본인의 계좌만 이체할 수 있습니다."
+                );
+            }
 
-        // 6. CHECKING -> SAVINGS 이체인지 확인
-        if (!"CHECKING".equals(fromAccount.getAccountType())) {
-            throw new BadRequestException(
-                    "출금 계좌는 CHECKING 계좌여야 합니다."
-            );
-        }
+            // CHECKING -> SAVINGS 이체인지 확인
+            if (!"CHECKING".equals(fromAccount.getAccountType())) {
+                throw new BadRequestException(
+                        "출금 계좌는 CHECKING 계좌여야 합니다."
+                );
+            }
 
-        if (!"SAVINGS".equals(toAccount.getAccountType())) {
-            throw new BadRequestException(
-                    "입금 계좌는 SAVINGS 계좌여야 합니다."
-            );
+            if (!"SAVINGS".equals(toAccount.getAccountType())) {
+                throw new BadRequestException(
+                        "입금 계좌는 SAVINGS 계좌여야 합니다."
+                );
+            }
+        } else {
+            // 계좌 ID가 생략되었거나 둘 다 동일하게 넘어온 경우: 학생 소유의 CHECKING 및 SAVINGS 계좌 자동 매핑
+            List<Account> accounts = accountRepository.findByMemberId(memberId);
+
+            if (accounts.isEmpty()) {
+                throw new NotFoundException("계좌 정보를 찾을 수 없습니다.");
+            }
+
+            fromAccount = accounts.stream()
+                    .filter(account -> "CHECKING".equals(account.getAccountType()))
+                    .findFirst()
+                    .orElseThrow(() ->
+                            new NotFoundException("출금할 당좌(CHECKING) 계좌를 찾을 수 없습니다.")
+                    );
+
+            toAccount = accounts.stream()
+                    .filter(account -> "SAVINGS".equals(account.getAccountType()))
+                    .findFirst()
+                    .orElseThrow(() ->
+                            new NotFoundException("입금할 저축(SAVINGS) 계좌를 찾을 수 없습니다.")
+                    );
         }
 
         // 7. 잔액 확인
