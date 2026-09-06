@@ -13,6 +13,10 @@ public interface EconomicMetricRepository
     Optional<EconomicMetric>
     findFirstByClassIdOrderByMeasuredAtDesc(Integer classId);
 
+    // 해당 학급의 가장 최근 경제지표 최대 2건 (최신 → 이전)
+    List<EconomicMetric>
+    findTop2ByClassIdOrderByMeasuredAtDesc(Integer classId);
+
     // 해당 학급의 경제지표 전체를 과거 → 최신 순으로 조회
     List<EconomicMetric>
     findByClassIdOrderByMeasuredAtAsc(Integer classId);

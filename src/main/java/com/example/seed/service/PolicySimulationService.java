@@ -19,6 +19,9 @@ import java.util.List;
 @Service
 public class PolicySimulationService {
 
+    private static final int RATE_SCALE = 4;
+    private static final BigDecimal MIN_STIMULUS_RATE = new BigDecimal("0.01");
+
     private final ClassroomRepository classroomRepository;
     private final EconomicMetricRepository economicMetricRepository;
     private final MemberRepository memberRepository;
@@ -43,12 +46,17 @@ public class PolicySimulationService {
             throw new NotFoundException("학급을 찾을 수 없습니다.");
         }
 
-        // 2. 최신 경제지표 조회
-        EconomicMetric metric = economicMetricRepository
-                .findFirstByClassIdOrderByMeasuredAtDesc(classroomId)
-                .orElseThrow(() ->
-                        new NotFoundException("학급 경제지표를 찾을 수 없습니다.")
-                );
+        // 2. 최신·직전 경제지표 조회
+        List<EconomicMetric> recentMetrics = economicMetricRepository
+                .findTop2ByClassIdOrderByMeasuredAtDesc(classroomId);
+
+        if (recentMetrics.isEmpty()) {
+            throw new NotFoundException("학급 경제지표를 찾을 수 없습니다.");
+        }
+
+        EconomicMetric metric = recentMetrics.get(0);
+        EconomicMetric previousMetric =
+                recentMetrics.size() > 1 ? recentMetrics.get(1) : null;
 
         // 3. 요청값 검증
         validateRequest(request);
@@ -65,6 +73,9 @@ public class PolicySimulationService {
                 metric.getAverageConsumption()
                         .multiply(BigDecimal.valueOf(studentCount));
 
+        BigDecimal beforeInflationRate =
+                calculateInflationRate(metric, previousMetric);
+
         String beforeEconomicStatus =
                 determineEconomicStatus(
                         metric.getConsumptionChangeRate(),
@@ -75,7 +86,7 @@ public class PolicySimulationService {
                 new PolicySimulationMetricResponse(
                         metric.getTotalMoney(),
                         beforeTotalConsumption,
-                        null,
+                        beforeInflationRate,
                         metric.getConsumptionChangeRate(),
                         beforeEconomicStatus
                 );
@@ -86,7 +97,8 @@ public class PolicySimulationService {
                         request.getProposalId(),
                         rate,
                         metric,
-                        beforeTotalConsumption
+                        beforeTotalConsumption,
+                        beforeInflationRate
                 );
 
         String afterEconomicStatus =
@@ -99,7 +111,7 @@ public class PolicySimulationService {
                 new PolicySimulationMetricResponse(
                         simulationResult.moneySupply(),
                         simulationResult.totalConsumption(),
-                        null,
+                        simulationResult.inflationRate(),
                         simulationResult.consumptionChangeRate(),
                         afterEconomicStatus
                 );
@@ -138,55 +150,65 @@ public class PolicySimulationService {
         }
     }
 
+    private BigDecimal calculateInflationRate(
+            EconomicMetric current,
+            EconomicMetric previous
+    ) {
+
+        if (previous != null
+                && previous.getAverageConsumption().compareTo(BigDecimal.ZERO) > 0) {
+
+            return current.getAverageConsumption()
+                    .subtract(previous.getAverageConsumption())
+                    .divide(
+                            previous.getAverageConsumption(),
+                            RATE_SCALE,
+                            RoundingMode.HALF_UP
+                    );
+        }
+
+        // 직전 지표가 없으면 소비 변화율을 수요 견인 물가 대리지표로 사용
+        return scaleRate(current.getConsumptionChangeRate());
+    }
+
     private SimulationResult calculateAfter(
             String proposalId,
             BigDecimal rate,
             EconomicMetric metric,
-            BigDecimal beforeTotalConsumption
+            BigDecimal beforeTotalConsumption,
+            BigDecimal beforeInflationRate
     ) {
 
         BigDecimal multiplier;
-
         BigDecimal afterConsumptionChangeRate;
         BigDecimal afterTransactionChangeRate;
+        BigDecimal afterInflationRate;
 
         switch (proposalId) {
 
             case "proposal_tax_increase" -> {
-
+                // 과열 완화: 성장률을 0으로 수렴시켜 STABLE로 전환하고 물가를 낮춘다.
                 multiplier = BigDecimal.ONE.subtract(rate);
-
-                afterConsumptionChangeRate =
-                        metric.getConsumptionChangeRate()
-                                .subtract(rate);
-
-                afterTransactionChangeRate =
-                        metric.getTransactionChangeRate()
-                                .subtract(rate);
+                afterConsumptionChangeRate = BigDecimal.ZERO;
+                afterTransactionChangeRate = BigDecimal.ZERO;
+                afterInflationRate = scaleRate(beforeInflationRate.subtract(rate));
             }
 
             case "proposal_tax_decrease" -> {
+                // 경기 활성화: 두 변화율을 양수로 만들어 EXPANSION으로 전환한다.
+                BigDecimal stimulatedRate = stimulusRate(rate);
 
                 multiplier = BigDecimal.ONE.add(rate);
-
-                afterConsumptionChangeRate =
-                        metric.getConsumptionChangeRate()
-                                .add(rate);
-
-                afterTransactionChangeRate =
-                        metric.getTransactionChangeRate()
-                                .add(rate);
+                afterConsumptionChangeRate = stimulatedRate;
+                afterTransactionChangeRate = stimulatedRate;
+                afterInflationRate = scaleRate(beforeInflationRate.add(stimulatedRate));
             }
 
             case "proposal_maintain_policy" -> {
-
                 multiplier = BigDecimal.ONE;
-
-                afterConsumptionChangeRate =
-                        metric.getConsumptionChangeRate();
-
-                afterTransactionChangeRate =
-                        metric.getTransactionChangeRate();
+                afterConsumptionChangeRate = metric.getConsumptionChangeRate();
+                afterTransactionChangeRate = metric.getTransactionChangeRate();
+                afterInflationRate = beforeInflationRate;
             }
 
             default ->
@@ -207,9 +229,23 @@ public class PolicySimulationService {
         return new SimulationResult(
                 afterMoneySupply,
                 afterTotalConsumption,
+                afterInflationRate,
                 afterConsumptionChangeRate,
                 afterTransactionChangeRate
         );
+    }
+
+    private BigDecimal stimulusRate(BigDecimal rate) {
+
+        if (rate.compareTo(BigDecimal.ZERO) > 0) {
+            return scaleRate(rate);
+        }
+
+        return MIN_STIMULUS_RATE;
+    }
+
+    private BigDecimal scaleRate(BigDecimal value) {
+        return value.setScale(RATE_SCALE, RoundingMode.HALF_UP);
     }
 
     private String determineEconomicStatus(
@@ -264,6 +300,20 @@ public class PolicySimulationService {
             changes.add("총 소비액이 증가했습니다.");
         }
 
+        if (before.getInflationRate() != null
+                && after.getInflationRate() != null) {
+
+            int inflationComparison =
+                    after.getInflationRate()
+                            .compareTo(before.getInflationRate());
+
+            if (inflationComparison < 0) {
+                changes.add("물가상승률이 감소했습니다.");
+            } else if (inflationComparison > 0) {
+                changes.add("물가상승률이 증가했습니다.");
+            }
+        }
+
         if (!before.getEconomicStatus()
                 .equals(after.getEconomicStatus())) {
 
@@ -286,6 +336,7 @@ public class PolicySimulationService {
     private record SimulationResult(
             Integer moneySupply,
             BigDecimal totalConsumption,
+            BigDecimal inflationRate,
             BigDecimal consumptionChangeRate,
             BigDecimal transactionChangeRate
     ) {
